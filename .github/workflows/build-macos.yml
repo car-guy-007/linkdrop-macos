@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -86,3 +86,17 @@ jobs:
           path: LinkDrop-macOS.zip
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish permanent Mac app release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            gh release upload v1.0.0 LinkDrop-macOS.zip --clobber
+          else
+            gh release create v1.0.0 LinkDrop-macOS.zip \
+              --title "LinkDrop for macOS 1.0.0" \
+              --notes "Native macOS app for Apple Silicon and Intel (macOS 13+). Download the ZIP, extract LinkDrop.app, move it to Applications. The app is ad-hoc signed but not Apple-notarized, so the first launch may require approval under System Settings > Privacy & Security > Open Anyway. Download videos only where you have permission; DRM is not bypassed."
+          fi
