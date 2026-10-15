@@ -1,0 +1,88 @@
+name: Build LinkDrop macOS app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 55
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Compile universal native Mac app
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="$(xcrun --sdk macosx --show-sdk-path)"
+          mkdir -p build/arm64 build/amd64
+          xcrun swiftc -O -parse-as-library -target arm64-apple-macos13.0 -sdk "$SDK" \
+            -o build/arm64/LinkDrop LinkDrop.swift
+          xcrun swiftc -O -parse-as-library -target x86_64-apple-macos13.0 -sdk "$SDK" \
+            -o build/amd64/LinkDrop LinkDrop.swift
+          APP="build/LinkDrop.app"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          lipo -create build/arm64/LinkDrop build/amd64/LinkDrop \
+            -output "$APP/Contents/MacOS/LinkDrop"
+          chmod +x "$APP/Contents/MacOS/LinkDrop"
+          cat > "$APP/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key><string>LinkDrop</string>
+            <key>CFBundleIdentifier</key><string>app.linkdrop.macos</string>
+            <key>CFBundleName</key><string>LinkDrop</string>
+            <key>CFBundleDisplayName</key><string>LinkDrop</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>1.0</string>
+            <key>CFBundleVersion</key><string>1</string>
+            <key>LSMinimumSystemVersion</key><string>13.0</string>
+            <key>LSApplicationCategoryType</key><string>public.app-category.video</string>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict>
+          </plist>
+          PLIST
+          plutil -lint "$APP/Contents/Info.plist"
+
+      - name: Package yt-dlp, FFmpeg and Deno
+        shell: bash
+        run: bash scripts/bundle-tools.sh build/LinkDrop.app
+
+      - name: Validate architecture and sign application
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="build/LinkDrop.app"
+          test -x "$APP/Contents/MacOS/LinkDrop"
+          test -x "$APP/Contents/Resources/tools/yt-dlp_macos"
+          for arch in arm64 amd64; do
+            test -x "$APP/Contents/Resources/tools/$arch/ffmpeg"
+            test -x "$APP/Contents/Resources/tools/$arch/ffprobe"
+            test -x "$APP/Contents/Resources/tools/$arch/deno"
+          done
+          lipo -archs "$APP/Contents/MacOS/LinkDrop"
+          for tool in "$APP/Contents/Resources/tools/yt-dlp_macos" \
+                      "$APP"/Contents/Resources/tools/{arm64,amd64}/{deno,ffmpeg,ffprobe}; do
+            codesign --force --sign - "$tool"
+          done
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --deep --verbose=2 "$APP"
+
+      - name: Zip downloadable app
+        shell: bash
+        run: ditto -c -k --sequesterRsrc --keepParent build/LinkDrop.app LinkDrop-macOS.zip
+
+      - name: Upload ready-to-open Mac app
+        uses: actions/upload-artifact@v4
+        with:
+          name: LinkDrop-macOS
+          path: LinkDrop-macOS.zip
+          if-no-files-found: error
+          retention-days: 30
