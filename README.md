@@ -1,13 +1,23 @@
 # LinkDrop for macOS
 
-A lightweight native Mac video downloader. Paste a URL, choose quality, and download files to a selected folder. Uses yt-dlp, FFmpeg, and Deno in a self-contained application bundle.
+A simple native Mac video downloader. Paste a URL, choose quality, save a video or MP3. Runs locally using yt-dlp, FFmpeg, and Deno bundled into the app.
 
-**Download the app:** Open [Actions](../../actions/workflows/build-macos.yml), select the latest successful **Build LinkDrop macOS app** run, and download the **LinkDrop-macOS** artifact. Unzip it twice if prompted, then drag `LinkDrop.app` to Applications.
+## Install
 
-**Important:** Builds are ad-hoc signed rather than Apple Developer ID notarized. macOS may require System Settings → Privacy & Security → Open Anyway on first launch. Always confirm the download came from your repository.
+**Recommended:** Download the latest [LinkDrop macOS DMG](../../releases/latest), double-click it, and drag `LinkDrop.app` to the Applications shortcut in the installer window. Eject the installer disk, then open the app from Applications.
 
-Features: best/1080p/720p/MP3, retries, resume, playlist opt-in, browser-cookie opt-in for content you have access to, download progress and cancellation, updateable yt-dlp engine. No web service or telemetry.
+The release also includes an ordinary ZIP for alternative installation. Requires macOS 13 or later (Apple Silicon or Intel). No Homebrew, Python, Xcode or Terminal required for normal use.
 
-Not all websites or videos work. DRM, inaccessible/private or paywalled content are not bypassed. Respect creators' rights and website terms.
+**Mac security:** The app is ad-hoc signed, **not Apple Developer ID signed or notarized**. The DMG does not remove that restriction; macOS may block it on first launch. On your own trusted download, attempt to launch from Applications, then go to **System Settings → Privacy & Security → Open Anyway** if that option is offered. Apple-notarized, warning-free distribution requires an Apple Developer ID certificate, developer account and notarization. Do **not** disable Gatekeeper system-wide. If macOS says the app is "damaged", treat that separately from "unidentified developer" and report the exact error.
 
-**Developer notes:** Source: `LinkDrop.swift`. Packaging/dependencies: `scripts/bundle-tools.sh`. Automated universal Apple Silicon + Intel build: `.github/workflows/build-macos.yml`. Dependencies are retrieved from their upstream publishers at build time and SHA-256 checked against their corresponding release manifests. The integrity checks do not constitute an independent security audit. Third-party tools are distributed under their own licenses.
+Features: best/1080p/720p/MP3 options, retries, resumable downloads when supported, playlist opt-in, browser-cookie opt-in for videos you may access, download progress, cancel, and an updateable yt-dlp engine. The app has no telemetry or hosted download server.
+
+Not all websites or videos work. DRM, inaccessible/private or paywalled content aren't bypassed. Download only where authorized and respect creators' rights and site policies.
+
+## Developer notes
+
+- App source: `LinkDrop.swift`
+- Tool bundling: `scripts/bundle-tools.sh`
+- Universal Apple Silicon/Intel build, executable smoke test, signed bundle, installer DMG and release: `.github/workflows/build-macos.yml`
+- The DMG is a drag-and-drop installer, **not a privileged installer package**.
+- Third-party dependencies are downloaded during the build and checked against upstream SHA-256 manifests; this is not an independent security audit. Dependencies retain their own licenses.
