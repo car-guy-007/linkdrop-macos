@@ -41,7 +41,7 @@ jobs:
             <key>CFBundleName</key><string>LinkDrop</string>
             <key>CFBundleDisplayName</key><string>LinkDrop</string>
             <key>CFBundlePackageType</key><string>APPL</string>
-            <key>CFBundleShortVersionString</key><string>1.0</string>
+            <key>CFBundleShortVersionString</key><string>1.0.1</string>
             <key>CFBundleVersion</key><string>1</string>
             <key>LSMinimumSystemVersion</key><string>13.0</string>
             <key>LSApplicationCategoryType</key><string>public.app-category.video</string>
@@ -75,6 +75,25 @@ jobs:
           codesign --force --deep --sign - "$APP"
           codesign --verify --deep --verbose=2 "$APP"
 
+      - name: Smoke test app launches on macOS
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="$PWD/build/LinkDrop.app"
+          LOG="$RUNNER_TEMP/linkdrop-launch.log"
+          "$APP/Contents/MacOS/LinkDrop" > "$LOG" 2>&1 &
+          PID=$!
+          sleep 12
+          if ! kill -0 "$PID" 2>/dev/null; then
+            echo "::error::LinkDrop exited or crashed during startup"
+            cat "$LOG"
+            ls -lt ~/Library/Logs/DiagnosticReports/LinkDrop* 2>/dev/null | head || true
+            exit 1
+          fi
+          echo "LinkDrop remained running for 12 seconds — startup smoke test passed."
+          kill "$PID" 2>/dev/null || true
+          wait "$PID" 2>/dev/null || true
+
       - name: Zip downloadable app
         shell: bash
         run: ditto -c -k --sequesterRsrc --keepParent build/LinkDrop.app LinkDrop-macOS.zip
@@ -93,10 +112,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view v1.0.0 >/dev/null 2>&1; then
-            gh release upload v1.0.0 LinkDrop-macOS.zip --clobber
+          if gh release view v1.0.1 >/dev/null 2>&1; then
+            gh release upload v1.0.1 LinkDrop-macOS.zip --clobber
           else
-            gh release create v1.0.0 LinkDrop-macOS.zip \
-              --title "LinkDrop for macOS 1.0.0" \
+            gh release create v1.0.1 LinkDrop-macOS.zip \
+              --title "LinkDrop for macOS 1.0.1" \
               --notes "Native macOS app for Apple Silicon and Intel (macOS 13+). Download the ZIP, extract LinkDrop.app, move it to Applications. The app is ad-hoc signed but not Apple-notarized, so the first launch may require approval under System Settings > Privacy & Security > Open Anyway. Download videos only where you have permission; DRM is not bypassed."
           fi
