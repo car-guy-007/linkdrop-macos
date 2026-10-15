@@ -41,8 +41,8 @@ jobs:
             <key>CFBundleName</key><string>LinkDrop</string>
             <key>CFBundleDisplayName</key><string>LinkDrop</string>
             <key>CFBundlePackageType</key><string>APPL</string>
-            <key>CFBundleShortVersionString</key><string>1.0.1</string>
-            <key>CFBundleVersion</key><string>1</string>
+            <key>CFBundleShortVersionString</key><string>1.0.2</string>
+            <key>CFBundleVersion</key><string>2</string>
             <key>LSMinimumSystemVersion</key><string>13.0</string>
             <key>LSApplicationCategoryType</key><string>public.app-category.video</string>
             <key>NSHighResolutionCapable</key><true/>
@@ -98,11 +98,37 @@ jobs:
         shell: bash
         run: ditto -c -k --sequesterRsrc --keepParent build/LinkDrop.app LinkDrop-macOS.zip
 
-      - name: Upload ready-to-open Mac app
+      - name: Create and verify drag-to-Applications DMG
+        shell: bash
+        run: |
+          set -euo pipefail
+          STAGE="$RUNNER_TEMP/linkdrop-installer"
+          MOUNT="$RUNNER_TEMP/linkdrop-installer-check"
+          mkdir -p "$STAGE" "$MOUNT"
+          ditto build/LinkDrop.app "$STAGE/LinkDrop.app"
+          ln -s /Applications "$STAGE/Applications"
+          hdiutil create -volname "LinkDrop" -srcfolder "$STAGE" \
+            -format UDZO -imagekey zlib-level=9 -ov LinkDrop-macOS.dmg
+          hdiutil verify LinkDrop-macOS.dmg
+          hdiutil attach -readonly -nobrowse -quiet \
+            -mountpoint "$MOUNT" LinkDrop-macOS.dmg
+          trap 'hdiutil detach "$MOUNT" -quiet || true' EXIT
+          test -x "$MOUNT/LinkDrop.app/Contents/MacOS/LinkDrop"
+          test "$(readlink "$MOUNT/Applications")" = "/Applications"
+          codesign --verify --deep --verbose=2 "$MOUNT/LinkDrop.app"
+          cmp build/LinkDrop.app/Contents/MacOS/LinkDrop \
+              "$MOUNT/LinkDrop.app/Contents/MacOS/LinkDrop"
+          hdiutil detach "$MOUNT" -quiet
+          trap - EXIT
+          echo "DMG mount, signature and contents verified."
+
+      - name: Upload DMG and ZIP installers
         uses: actions/upload-artifact@v6
         with:
           name: LinkDrop-macOS
-          path: LinkDrop-macOS.zip
+          path: |
+            LinkDrop-macOS.dmg
+            LinkDrop-macOS.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -112,10 +138,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view v1.0.1 >/dev/null 2>&1; then
-            gh release upload v1.0.1 LinkDrop-macOS.zip --clobber
+          if gh release view v1.0.2 >/dev/null 2>&1; then
+            gh release upload v1.0.2 LinkDrop-macOS.dmg LinkDrop-macOS.zip --clobber
           else
-            gh release create v1.0.1 LinkDrop-macOS.zip \
-              --title "LinkDrop for macOS 1.0.1" \
-              --notes "Native macOS app for Apple Silicon and Intel (macOS 13+). Download the ZIP, extract LinkDrop.app, move it to Applications. The app is ad-hoc signed but not Apple-notarized, so the first launch may require approval under System Settings > Privacy & Security > Open Anyway. Download videos only where you have permission; DRM is not bypassed."
+            gh release create v1.0.2 LinkDrop-macOS.dmg LinkDrop-macOS.zip \
+              --title "LinkDrop for macOS 1.0.2" \
+              --notes "Native macOS app for Apple Silicon and Intel (macOS 13+). Download the DMG, open it and drag LinkDrop.app to Applications. The app is ad-hoc signed but not Apple-notarized, so the first launch may require approval under System Settings > Privacy & Security > Open Anyway. Download videos only where you have permission; DRM is not bypassed."
           fi
