@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 55
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Compile universal native Mac app
         shell: bash
@@ -80,7 +80,7 @@ jobs:
         run: ditto -c -k --sequesterRsrc --keepParent build/LinkDrop.app LinkDrop-macOS.zip
 
       - name: Upload ready-to-open Mac app
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: LinkDrop-macOS
           path: LinkDrop-macOS.zip
