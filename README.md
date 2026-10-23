@@ -1,5 +1,10 @@
 # LinkDrop for macOS
 
+## iPhone version (Safari web app)
+
+The new [LinkDrop for iPhone](iphone/README.md) lives in `iphone/`. It installs from Safari without iOS signing and supports **direct media links only** until a download backend is configured. To publish it, choose **GitHub Actions** in [repository Pages settings](https://github.com/car-guy-007/linkdrop-macos/settings/pages), then run the [iPhone deployment workflow](https://github.com/car-guy-007/linkdrop-macos/actions/workflows/iphone-pages.yml). Once published, it will be available at `https://car-guy-007.github.io/linkdrop-macos/`.
+
+
 A simple native Mac video downloader. Paste a URL, choose quality, save a video or MP3. Runs locally using yt-dlp, FFmpeg, and Deno bundled into the app.
 
 ## Install
