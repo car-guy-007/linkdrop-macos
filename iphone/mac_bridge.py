@@ -213,7 +213,13 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/health":
             self.send_json(200, {"ok": True, "app": "LinkDrop Bridge"})
             return
-        if not self.authorized():
+        # The final file navigation uses a short-lived one-time ticket because browsers
+        # cannot attach the pairing Authorization header to a normal download link.
+        ticketed_file = (
+            re.fullmatch(r"/api/jobs/([a-f0-9]{16})/file", parsed.path) is not None
+            and bool(urllib.parse.parse_qs(parsed.query).get("ticket"))
+        )
+        if not ticketed_file and not self.authorized():
             return
         if parsed.path == "/api/jobs":
             with LOCK:
