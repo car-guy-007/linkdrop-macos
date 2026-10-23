@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1119">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LinkDrop">
+  <meta name="description" content="A simple way to open and save direct video and audio links on iPhone.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="stylesheet" href="./style.css">
+  <title>LinkDrop — iPhone</title>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div class="brand">
+        <div class="brandmark" aria-hidden="true">
+          <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v12m-4-4 4 4 4-4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+          </svg>
+        </div>
+        <div><div class="brandname">LinkDrop<span class="brandaccent">.</span></div><div class="brandsub">For iPhone</div></div>
+      </div>
+      <span class="tag">BETA</span>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow"><span class="online-dot"></span> OPEN • SAVE • KEEP</div>
+      <h1>Your video.<br><span class="gradient-word">One link away.</span></h1>
+      <p class="lede">Paste a direct video or audio file link and save it through Safari—right on your iPhone.</p>
+    </section>
+
+    <section class="form-card" aria-label="Video link">
+      <label for="url">PASTE A LINK</label>
+      <div class="entry">
+        <input id="url" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="https://example.com/clip.mp4" aria-describedby="help" />
+        <button id="paste" type="button" class="paste-btn">Paste</button>
+      </div>
+      <p id="help" class="tip">Works with direct MP4, MOV, WebM, MP3 and other media file links.</p>
+      <button id="check" type="button" class="primary">
+        <span class="button-icon" aria-hidden="true">↘</span>
+        Check link
+        <span aria-hidden="true" class="button-chevron">→</span>
+      </button>
+      <div id="message" class="message" aria-live="polite" hidden></div>
+    </section>
+
+    <section id="result" class="result" aria-live="polite" hidden>
+      <div class="result-title" id="result-title">Your link is ready</div>
+      <p id="result-detail"></p>
+      <div class="result-actions" id="result-actions"></div>
+      <p class="small" id="result-help"></p>
+    </section>
+
+    <section class="recent" id="recents" hidden>
+      <div class="section-head"><h2>Recent links</h2><button type="button" id="clear" class="text-btn">Clear</button></div>
+      <div id="recent-list" class="recent-list"></div>
+    </section>
+
+    <details class="info-panel">
+      <summary>Which websites work? <span aria-hidden="true">＋</span></summary>
+      <div class="details-body">
+        <p><strong>Works now:</strong> URLs linking directly to a downloadable media file (for example, ending in <code>.mp4</code>, <code>.mov</code>, <code>.webm</code>, or <code>.mp3</code>). Safari handles saving or opening the file.</p>
+        <p><strong>Needs a download engine:</strong> YouTube, Instagram, TikTok, Facebook and other video <em>pages</em>. Those websites usually do not give the browser a plain downloadable file. A hosted server using a supported extractor would be needed to add that feature.</p>
+        <p><strong>Not supported:</strong> DRM-protected or inaccessible material. Only save content you have permission to download.</p>
+      </div>
+    </details>
+    <details class="info-panel">
+      <summary>How do I save the video? <span aria-hidden="true">＋</span></summary>
+      <div class="details-body">
+        <p>Tap <strong>Download file</strong>. Depending on the site, Safari may download the file to Downloads or play it. If it plays, use the Share menu and choose <strong>Save to Files</strong> if offered. Sites can block saving.</p>
+        <p>In Safari, downloaded files can be found in the Files app → Downloads or the download folder selected in Safari settings.</p>
+      </div>
+    </details>
+    <footer>
+      <div class="footer-line">LINKDROP / iOS</div>
+      <p>Links remain on your device. No tracking. No server uploads.</p>
+      <p class="version">Version 0.1 • Direct media preview</p>
+    </footer>
+  </main>
+  <script src="./app.js" defer></script>
+</body>
+</html>
