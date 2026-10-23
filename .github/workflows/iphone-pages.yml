@@ -1,0 +1,70 @@
+name: Build and publish LinkDrop iPhone
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'iphone/**'
+      - '.github/workflows/iphone-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the application
+        uses: actions/checkout@v5
+
+      - name: Validate and package iPhone application
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check iphone/app.js
+          node --check iphone/sw.js
+          python3 -m py_compile iphone/make_icons.py
+          python3 iphone/make_icons.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("iphone")
+          for name in ("index.html", "style.css", "app.js", "sw.js", "icon.svg", "manifest.webmanifest", "apple-touch-icon.png", "icon-512.png"):
+              assert (root/name).is_file(), f"Missing: {name}"
+          for icon in ("apple-touch-icon.png", "icon-512.png"):
+              assert (root/icon).read_bytes().startswith(b"\x89PNG\r\n\x1a\n"), "Invalid PNG header"
+          manifest = json.loads((root/"manifest.webmanifest").read_text())
+          assert manifest["display"] == "standalone"
+          print("iPhone app sources, PNG icons and manifest validated.")
+          PY
+          touch iphone/.nojekyll
+
+      - name: Upload installable iPhone web app files
+        uses: actions/upload-artifact@v6
+        with:
+          name: LinkDrop-iPhone-source
+          path: iphone/
+          retention-days: 30
+
+      - name: Upload website package
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: iphone/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Publish iPhone app
+        id: deployment
+        uses: actions/deploy-pages@v4
