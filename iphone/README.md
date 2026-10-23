@@ -19,7 +19,7 @@ The iPhone app checks pasted HTTP(S) links and lets Safari attempt saving a *dir
 
 The interface works offline once installed and cached, but downloading requires internet. Recent links are saved in the browser's local storage, on the user's device.
 
-**Limitations:** Ordinary YouTube, Instagram, TikTok, X, Facebook, and other site *page URLs* are not direct video files. GitHub Pages is static hosting; it does not execute yt-dlp or other server-side download engines. Supporting those sites on iPhone requires a separate remote backend with bandwidth/storage and likely recurring hosting costs. No website compatibility, third-party cookies, login sessions, or DRM bypass is promised. Respect copyright and site restrictions.
+**Limitations:** Ordinary YouTube, Instagram, TikTok, X, Facebook, and other site *page URLs* are not direct video files. GitHub Pages is static hosting; it does not execute yt-dlp or other server-side download engines. Supporting those sites on iPhone requires a download engine; the optional free Mac bridge below uses your own Mac and Tailscale instead of paid hosting. No website compatibility, third-party cookies, login sessions, or DRM bypass is promised. Respect copyright and site restrictions.
 
 ## Files
 
