@@ -231,11 +231,30 @@ class Handler(BaseHTTPRequestHandler):
                 clean = {k: v for k, v in job.items() if k not in ("process", "url")}
             self.send_json(200, clean)
             return
-        match = re.fullmatch(r"/api/jobs/([a-f0-9]{16})/file", parsed.path)
+        match = re.fullmatch(r"/api/jobs/([a-f0-9]{16})/ticket", parsed.path)
         if match:
             with LOCK:
+                job = JOBS.get(match.group(1))
+                if not job or job.get("state") != "done" or not job.get("file") or not Path(job["file"]).is_file():
+                    self.send_json(404, {"error": "Completed file not available"})
+                    return
+                ticket = secrets.token_urlsafe(24)
+                job["ticket"] = ticket
+                job["ticket_expires"] = time.time() + 90
+            self.send_json(200, {"url": f"/api/jobs/{match.group(1)}/file?ticket={ticket}"})
+            return
+        match = re.fullmatch(r"/api/jobs/([a-f0-9]{16})/file", parsed.path)
+        if match:
+            query = urllib.parse.parse_qs(parsed.query)
+            supplied_ticket = (query.get("ticket") or [""])[0]
+            with LOCK:
                 job = JOBS.get(match.group(1), {})
-                file_path = job.get("file") if job.get("state") == "done" else None
+                valid_ticket = bool(supplied_ticket and job.get("ticket") == supplied_ticket
+                                    and time.time() <= job.get("ticket_expires", 0))
+                file_path = job.get("file") if job.get("state") == "done" and valid_ticket else None
+                if valid_ticket:
+                    job.pop("ticket", None)
+                    job.pop("ticket_expires", None)
             if not file_path or not Path(file_path).is_file():
                 self.send_json(404, {"error": "Completed file not available"})
                 return
