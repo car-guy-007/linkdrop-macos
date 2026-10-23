@@ -31,3 +31,40 @@ The interface works offline once installed and cached, but downloading requires 
 - icon.svg, make_icons.py: app icons (PNG generated during build)
 
 Build and deployment: .github/workflows/iphone-pages.yml. After GitHub Pages has been enabled, pushes to iphone/ automatically update the website.
+
+
+## Free Mac bridge for video sites
+
+The iPhone web app can use your own Mac as the download engine. There is no paid download host. The Mac must stay awake and online while processing and sending a file.
+
+### One-time setup
+
+1. Install **Tailscale** on your Mac and iPhone and sign in to the same personal account. Tailscale's personal plan is free. Use its official download page: https://tailscale.com/download.
+2. Install LinkDrop.app in your Mac's **Applications** folder and open it once.
+3. On the Mac, open Terminal and run:
+
+   ```sh
+   curl -fsSL https://raw.githubusercontent.com/car-guy-007/linkdrop-macos/main/iphone/mac_bridge.py -o "$HOME/Downloads/linkdrop-mac-bridge.py"
+   python3 "$HOME/Downloads/linkdrop-mac-bridge.py"
+   ```
+
+   Keep that Terminal window open. It prints a long **pairing token**. Copy it; do not share it.
+4. In a second Terminal window, run:
+
+   ```sh
+   tailscale serve --bg 8765
+   tailscale serve status
+   ```
+
+   The status output should show the HTTPS address for your Mac. If Tailscale asks you to enable HTTPS, follow its prompt.
+5. Open the LinkDrop iPhone web app in Safari. Enter that HTTPS address and the pairing token in **Connect your Mac**, then tap **Connect to Mac**.
+6. Paste a supported video page, choose quality, tap **Get video details**, then **Download on Mac**. When complete, tap **Save to iPhone**.
+
+### Important notes
+
+- The helper binds only to your Mac's loopback interface. Use Tailscale Serve; **do not port-forward port 8765 or expose it directly to the public internet**.
+- Keep the pairing token private. The app stores it in this iPhone browser's local storage. If you believe it was exposed, stop the helper and remove `~/Library/Application Support/LinkDrop/remote-token` before restarting to generate a new token.
+- Downloads are saved to the Mac's `~/Downloads` folder first, then transferred directly to the iPhone through the encrypted Tailscale connection.
+- The Mac helper requires Python 3 and the LinkDrop app's bundled yt-dlp tool. If `python3` is missing, install Python from its official site.
+- Site support can change. Login-required/private videos may fail; DRM and access controls are not bypassed. Only download content you are authorized to save.
+- This is an early beta bridge. Keep the Mac and iPhone software updated, and stop the helper with Control-C when not using it.
